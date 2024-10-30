@@ -3,7 +3,7 @@ import os
 import numpy as np
 import glob
 
-VIDEO_PATH = r"videos/Sitting and smiling robbery.mp4"
+VIDEO_PATH = r"videos/woman_test.mp4"
 CASCADE_PATH = r"/home/cashc/Documents/Projects/PyVideoFace/cascades/haarcascade_frontalcatface_extended.xml"
 FRAMES_OUTPUT_DIR = "./frames_output"
 FRAMES_WITH_BOXES_DIR = "./frames_with_boxes"
@@ -12,7 +12,13 @@ totalFaces = 0
 def setup():
     os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
     files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, '*'))
+    
     for f in files:
+        os.remove(f)
+
+    boxFiles = glob.glob(os.path.join(FRAMES_WITH_BOXES_DIR, '*'))
+
+    for f in boxFiles:
         os.remove(f)
 
 def videoFrames():
@@ -50,9 +56,10 @@ def detectFaces():
             print(f"Error loading image {frame_path}. Skipping.")
             continue
 
+        
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
-            gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40)
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(10, 10), maxSize=(1000,1000)
         )
 
         print(f"Detected {len(faces)} faces in {frame_file}")
@@ -62,7 +69,8 @@ def detectFaces():
 
         output_path = os.path.join(FRAMES_WITH_BOXES_DIR, frame_file)
         cv.imwrite(output_path, frame)
-    print(f"Face detection rating = {round((totalFaces/np.size(frameList)), 3)}")
+    if frameList.size > 0:
+        print(f"Face detection rating = {round((totalFaces / np.size(frameList)), 3)}")
     print(f"Processed frames saved in directory: {FRAMES_WITH_BOXES_DIR}")
 
 def main():
