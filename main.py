@@ -8,6 +8,7 @@ CASCADE_PATH = r"/home/cashc/Documents/Projects/PyVideoFace/cascades/haarcascade
 FRAMES_OUTPUT_DIR = "./frames_output"
 FRAMES_WITH_BOXES_DIR = "./frames_with_boxes"
 
+totalFaces = 0 
 def setup():
     os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
     files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, '*'))
@@ -33,6 +34,7 @@ def videoFrames():
     vidcap.release()
 
 def detectFaces():
+    global totalFaces
     face_cascade = cv.CascadeClassifier(CASCADE_PATH)
     if face_cascade.empty():
         print(f"Error loading cascade file: {CASCADE_PATH}")
@@ -54,13 +56,13 @@ def detectFaces():
         )
 
         print(f"Detected {len(faces)} faces in {frame_file}")
-
+        totalFaces += len(faces)
         for x, y, w, h in faces:
             cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
         output_path = os.path.join(FRAMES_WITH_BOXES_DIR, frame_file)
         cv.imwrite(output_path, frame)
-
+    print(f"Face detection rating = {round((totalFaces/np.size(frameList)), 3)}")
     print(f"Processed frames saved in directory: {FRAMES_WITH_BOXES_DIR}")
 
 def main():
