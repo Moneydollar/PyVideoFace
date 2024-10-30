@@ -1,0 +1,6 @@
+./videos/*
+.mp4
+.jpg
+./frames_with_boxes
+./frame_output
+./.venv

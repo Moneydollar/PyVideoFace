@@ -1,70 +1,72 @@
 import cv2 as cv
 import os
 import numpy as np
+import glob
+
+VIDEO_PATH = r"videos/Sitting and smiling robbery.mp4"
+CASCADE_PATH = r"/home/cashc/Documents/Projects/PyVideoFace/cascades/haarcascade_frontalcatface_extended.xml"
+FRAMES_OUTPUT_DIR = "./frames_output"
+FRAMES_WITH_BOXES_DIR = "./frames_with_boxes"
 
 def setup():
-    os.makedirs(r"./frames_output", exist_ok= True)
+    os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
+    files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, '*'))
+    for f in files:
+        os.remove(f)
 
 def videoFrames():
-    vidcap = cv.VideoCapture('/home/cashc/Documents/Projects/PyVideoFace/videos/woman_test.mp4')
-    success,image = vidcap.read()
+    vidcap = cv.VideoCapture(VIDEO_PATH)
+    if not vidcap.isOpened():
+        print(f"Error opening video file: {VIDEO_PATH}")
+        return
+
+    success, image = vidcap.read()
     count = 0
 
     while success:
-        cv.imwrite("./frames_output/frame%d.jpg" % count, image)     # save frame as JPEG file      
-        success,image = vidcap.read()
-        print('Read a new frame: ', success)
+        frame_path = os.path.join(FRAMES_OUTPUT_DIR, f"frame{count}.jpg")
+        cv.imwrite(frame_path, image)  # save frame as JPEG file
+        success, image = vidcap.read()
+        print(f"Read a new frame: {success}")
         count += 1
 
+    vidcap.release()
 
 def detectFaces():
-    # Load multiple Haar cascades
-    cascades = [
-        '/home/cashc/Documents/Projects/PyVideoFace/cascades/haarcascade_frontalcatface_extended.xml',
-    ]
+    face_cascade = cv.CascadeClassifier(CASCADE_PATH)
+    if face_cascade.empty():
+        print(f"Error loading cascade file: {CASCADE_PATH}")
+        return
 
-    
-    frameList = np.sort(os.listdir("./frames_output"))
-    output_dir = "./frames_with_boxes"
-    
-    
-    os.makedirs(output_dir, exist_ok=True)
-    
-   
+    frameList = np.sort(os.listdir(FRAMES_OUTPUT_DIR))
+    os.makedirs(FRAMES_WITH_BOXES_DIR, exist_ok=True)
+
     for frame_file in frameList:
-        frame_path = os.path.join("./frames_output", frame_file)
-        
-        
+        frame_path = os.path.join(FRAMES_OUTPUT_DIR, frame_file)
         frame = cv.imread(frame_path)
         if frame is None:
             print(f"Error loading image {frame_path}. Skipping.")
             continue
-        
-        
+
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        
-        all_faces = []  
-        
-       
-        for cascade_path in cascades:
-            face_cascade = cv.CascadeClassifier(cascade_path)
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-            all_faces.extend(faces)  # Combine results
-            
-        # Remove duplicates (optional, if multiple cascades detect the same face)
-        all_faces = np.unique(all_faces, axis=0).tolist()
-        
-        
-        for (x, y, w, h) in all_faces:
+        faces = face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40)
+        )
+
+        print(f"Detected {len(faces)} faces in {frame_file}")
+
+        for x, y, w, h in faces:
             cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    
-        output_path = os.path.join(output_dir, frame_file)
+
+        output_path = os.path.join(FRAMES_WITH_BOXES_DIR, frame_file)
         cv.imwrite(output_path, frame)
-    
-    print(f"Processed frames saved in directory: {output_dir}")
 
-setup()
+    print(f"Processed frames saved in directory: {FRAMES_WITH_BOXES_DIR}")
 
-videoFrames()
+def main():
+    setup()
+    videoFrames()
+    detectFaces()
 
-detectFaces()
+if __name__ == "__main__":
+    main()
