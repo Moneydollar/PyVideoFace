@@ -2,13 +2,14 @@ import cv2 as cv
 import os
 import numpy as np
 import glob
+import face_recognition
 
 VIDEO_PATH = r"videos/woman_test.mp4"
-CASCADE_PATH = r"/home/cashc/Documents/Projects/PyVideoFace/cascades/haarcascade_frontalcatface_extended.xml"
 FRAMES_OUTPUT_DIR = "./frames_output"
 FRAMES_WITH_BOXES_DIR = "./frames_with_boxes"
 
-totalFaces = 0 
+totalFaces = 0
+
 def setup():
     os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
     files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, '*'))
@@ -32,7 +33,7 @@ def videoFrames():
 
     while success:
         frame_path = os.path.join(FRAMES_OUTPUT_DIR, f"frame{count}.jpg")
-        cv.imwrite(frame_path, image)  # save frame as JPEG file
+        cv.imwrite(frame_path, image)
         success, image = vidcap.read()
         print(f"Read a new frame: {success}")
         count += 1
@@ -41,34 +42,28 @@ def videoFrames():
 
 def detectFaces():
     global totalFaces
-    face_cascade = cv.CascadeClassifier(CASCADE_PATH)
-    if face_cascade.empty():
-        print(f"Error loading cascade file: {CASCADE_PATH}")
-        return
-
-    frameList = np.sort(os.listdir(FRAMES_OUTPUT_DIR))
+    frameList = np.sort(os.listdir(FRAMES_OUTPUT_DIR), kind='heapsort')
     os.makedirs(FRAMES_WITH_BOXES_DIR, exist_ok=True)
 
     for frame_file in frameList:
         frame_path = os.path.join(FRAMES_OUTPUT_DIR, frame_file)
-        frame = cv.imread(frame_path)
+        frame = face_recognition.load_image_file(frame_path)
+        
         if frame is None:
             print(f"Error loading image {frame_path}. Skipping.")
             continue
 
-        
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(
-            gray, scaleFactor=1.1, minNeighbors=5, minSize=(10, 10), maxSize=(1000,1000)
-        )
+        face_locations = face_recognition.face_locations(frame, model="cnn")
+        print(f"Detected {len(face_locations)} faces in {frame_file}")
+        totalFaces += len(face_locations)
 
-        print(f"Detected {len(faces)} faces in {frame_file}")
-        totalFaces += len(faces)
-        for x, y, w, h in faces:
-            cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
+        for top, right, bottom, left in face_locations:
+            cv.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
 
         output_path = os.path.join(FRAMES_WITH_BOXES_DIR, frame_file)
         cv.imwrite(output_path, frame)
+
     if frameList.size > 0:
         print(f"Face detection rating = {round((totalFaces / np.size(frameList)), 3)}")
     print(f"Processed frames saved in directory: {FRAMES_WITH_BOXES_DIR}")
