@@ -53,7 +53,7 @@ def detectFaces():
             print(f"Error loading image {frame_path}. Skipping.")
             continue
 
-        face_locations = face_recognition.face_locations(frame, model="cnn")
+        face_locations = face_recognition.face_locations(frame, model="hog")
         print(f"Detected {len(face_locations)} faces in {frame_file}")
         totalFaces += len(face_locations)
 
