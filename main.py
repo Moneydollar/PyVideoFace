@@ -1,7 +1,7 @@
 import glob
 import json
 import os
-from linecache import cache
+
 
 import cv2 as cv
 import face_recognition
