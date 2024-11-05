@@ -1,0 +1,47 @@
+[
+    {
+        "bounding_box": {
+            "frame": "frame87.jpg",
+            "top": 19,
+            "right": 291,
+            "bottom": 242,
+            "left": 68
+        }
+    },
+    {
+        "bounding_box": {
+            "frame": "frame88.jpg",
+            "top": 19,
+            "right": 291,
+            "bottom": 242,
+            "left": 68
+        }
+    },
+    {
+        "bounding_box": {
+            "frame": "frame89.jpg",
+            "top": 19,
+            "right": 291,
+            "bottom": 242,
+            "left": 68
+        }
+    },
+    {
+        "bounding_box": {
+            "frame": "frame9.jpg",
+            "top": 47,
+            "right": 373,
+            "bottom": 202,
+            "left": 218
+        }
+    },
+    {
+        "bounding_box": {
+            "frame": "frame90.jpg",
+            "top": 19,
+            "right": 291,
+            "bottom": 242,
+            "left": 68
+        }
+    }
+]
