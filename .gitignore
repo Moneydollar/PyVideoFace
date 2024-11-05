@@ -5,3 +5,4 @@
 ./frame_output
 ./.venv
 .cache
+./.idea
