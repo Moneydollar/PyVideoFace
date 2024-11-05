@@ -4,3 +4,4 @@
 ./frames_with_boxes
 ./frame_output
 ./.venv
+.cache

@@ -1,29 +1,36 @@
-import cv2 as cv
-import os
-import numpy as np
 import glob
+import json
+import os
+
+import cv2 as cv
 import face_recognition
+import numpy as np
+from cv2 import VideoCapture
 
-VIDEO_PATH = r"videos/woman_test.mp4"
-FRAMES_OUTPUT_DIR = "./frames_output"
-FRAMES_WITH_BOXES_DIR = "./frames_with_boxes"
-
+VIDEO_PATH = r"videos/Sitting and smiling robbery.mp4"
+FRAMES_OUTPUT_DIR = "./.cache/output" + VIDEO_PATH.removeprefix("videos")
+FRAMES_WITH_BOXES_DIR = "./.cache/boxed" + VIDEO_PATH.removeprefix("videos")
+FACES_DIR = "./faces" + VIDEO_PATH.removeprefix("videos")
+print(FACES_DIR)
 totalFaces = 0
 
-def setup():
+
+def cleanUp():
     os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
-    files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, '*'))
-    
+    files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, "*"))
+
     for f in files:
         os.remove(f)
 
-    boxFiles = glob.glob(os.path.join(FRAMES_WITH_BOXES_DIR, '*'))
+    boxFiles = glob.glob(os.path.join(FRAMES_WITH_BOXES_DIR, "*"))
 
     for f in boxFiles:
         os.remove(f)
 
+
+
 def videoFrames():
-    vidcap = cv.VideoCapture(VIDEO_PATH)
+    vidcap: VideoCapture = cv.VideoCapture(VIDEO_PATH)
     if not vidcap.isOpened():
         print(f"Error opening video file: {VIDEO_PATH}")
         return
@@ -40,17 +47,22 @@ def videoFrames():
 
     vidcap.release()
 
+
 def detectFaces():
     global totalFaces
-    frameList = np.sort(os.listdir(FRAMES_OUTPUT_DIR), kind='heapsort')
+    frameList = np.sort(os.listdir(FRAMES_OUTPUT_DIR), kind="heapsort")
     os.makedirs(FRAMES_WITH_BOXES_DIR, exist_ok=True)
+    os.makedirs(FACES_DIR, exist_ok=True)
+    batch_size = 25
+    current_batch = 0
+    batch_metadata = []
 
     for frame_file in frameList:
         frame_path = os.path.join(FRAMES_OUTPUT_DIR, frame_file)
         frame = face_recognition.load_image_file(frame_path)
-        
+
         if frame is None:
-            print(f"Error loading image {frame_path}. Skipping.")
+            print(f"Error loading image {frame_path}. Skipping...")
             continue
 
         face_locations = face_recognition.face_locations(frame, model="hog")
@@ -60,18 +72,48 @@ def detectFaces():
         frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
         for top, right, bottom, left in face_locations:
             cv.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
+            face_image = frame[top:bottom, left:right]
 
-        output_path = os.path.join(FRAMES_WITH_BOXES_DIR, frame_file)
-        cv.imwrite(output_path, frame)
+            metadata = {
+                "bounding_box": {
+                    "frame": frame_file,
+                    "top": top,
+                    "right": right,
+                    "bottom": bottom,
+                    "left": left
+                }
+            }
+            batch_metadata.append(metadata)
+
+            if len(batch_metadata) == batch_size:
+                batch_filename = f"metadata_batch_{current_batch}.json"
+                batch_path = os.path.join(FACES_DIR, batch_filename)
+                with open(batch_path, "w") as f:
+                    json.dump(batch_metadata, f, indent=4)
+
+                # Reset the batch metadata
+                    batch_metadata = []
+                    current_batch += 1
+
+            if batch_metadata:
+                batch_filename = f"metadata_batch_{current_batch}.json"
+                batch_path = os.path.join(FACES_DIR, batch_filename)
+                with open(batch_path, "w") as f:
+                    json.dump(batch_metadata, f, indent=4)
+
+            output_path = os.path.join(FACES_DIR, frame_file)
+            cv.imwrite(output_path, face_image)
 
     if frameList.size > 0:
         print(f"Face detection rating = {round((totalFaces / np.size(frameList)), 3)}")
-    print(f"Processed frames saved in directory: {FRAMES_WITH_BOXES_DIR}")
+    print(f"Processed frames saved in directory: {FACES_DIR}")
+
 
 def main():
-    setup()
     videoFrames()
     detectFaces()
+    cleanUp()
+
 
 if __name__ == "__main__":
     main()
