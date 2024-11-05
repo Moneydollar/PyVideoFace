@@ -1,22 +1,29 @@
 import glob
 import json
 import os
+from linecache import cache
 
 import cv2 as cv
 import face_recognition
 import numpy as np
 from cv2 import VideoCapture
 
-VIDEO_PATH = r"videos/Sitting and smiling robbery.mp4"
+
+VIDEO_PATH = r"videos/people.mp4"
 FRAMES_OUTPUT_DIR = "./.cache/output" + VIDEO_PATH.removeprefix("videos")
 FRAMES_WITH_BOXES_DIR = "./.cache/boxed" + VIDEO_PATH.removeprefix("videos")
 FACES_DIR = "./faces" + VIDEO_PATH.removeprefix("videos")
+
+
 print(FACES_DIR)
 totalFaces = 0
-
+def setup():
+    os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
+    os.makedirs(FRAMES_WITH_BOXES_DIR, exist_ok=True)
+    save = False
 
 def cleanUp():
-    os.makedirs(FRAMES_OUTPUT_DIR, exist_ok=True)
+
     files = glob.glob(os.path.join(FRAMES_OUTPUT_DIR, "*"))
 
     for f in files:
@@ -67,6 +74,12 @@ def detectFaces():
 
         face_locations = face_recognition.face_locations(frame, model="hog")
         print(f"Detected {len(face_locations)} faces in {frame_file}")
+        if len(face_locations) <= 0:
+            save = False
+        else:
+            save = True
+
+
         totalFaces += len(face_locations)
 
         frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
@@ -91,7 +104,6 @@ def detectFaces():
                 with open(batch_path, "w") as f:
                     json.dump(batch_metadata, f, indent=4)
 
-                # Reset the batch metadata
                     batch_metadata = []
                     current_batch += 1
 
@@ -100,9 +112,9 @@ def detectFaces():
                 batch_path = os.path.join(FACES_DIR, batch_filename)
                 with open(batch_path, "w") as f:
                     json.dump(batch_metadata, f, indent=4)
-
-            output_path = os.path.join(FACES_DIR, frame_file)
-            cv.imwrite(output_path, face_image)
+            if save:
+                output_path = os.path.join(FACES_DIR, frame_file)
+                cv.imwrite(output_path, face_image)
 
     if frameList.size > 0:
         print(f"Face detection rating = {round((totalFaces / np.size(frameList)), 3)}")
@@ -110,6 +122,7 @@ def detectFaces():
 
 
 def main():
+    setup()
     videoFrames()
     detectFaces()
     cleanUp()
