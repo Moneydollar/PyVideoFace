@@ -9,7 +9,7 @@ import numpy as np
 from cv2 import VideoCapture
 
 
-VIDEO_PATH = r"videos/people.mp4"
+VIDEO_PATH = r"videos/Sitting and smiling robbery.mp4"
 FRAMES_OUTPUT_DIR = "./.cache/output" + VIDEO_PATH.removeprefix("videos")
 FRAMES_WITH_BOXES_DIR = "./.cache/boxed" + VIDEO_PATH.removeprefix("videos")
 FACES_DIR = "./faces" + VIDEO_PATH.removeprefix("videos")
@@ -86,10 +86,12 @@ def detectFaces():
         for top, right, bottom, left in face_locations:
             cv.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
             face_image = frame[top:bottom, left:right]
-
+            frame_number = frame_file.split("frame")[-1].split(".")[0]
             metadata = {
+                "frame": {
+                    "frameNumber": frame_number
+                },
                 "bounding_box": {
-                    "frame": frame_file,
                     "top": top,
                     "right": right,
                     "bottom": bottom,
@@ -98,23 +100,25 @@ def detectFaces():
             }
             batch_metadata.append(metadata)
 
-            if len(batch_metadata) == batch_size:
-                batch_filename = f"metadata_batch_{current_batch}.json"
-                batch_path = os.path.join(FACES_DIR, batch_filename)
-                with open(batch_path, "w") as f:
-                    json.dump(batch_metadata, f, indent=4)
-
-                    batch_metadata = []
-                    current_batch += 1
-
-            if batch_metadata:
-                batch_filename = f"metadata_batch_{current_batch}.json"
-                batch_path = os.path.join(FACES_DIR, batch_filename)
-                with open(batch_path, "w") as f:
-                    json.dump(batch_metadata, f, indent=4)
             if save:
                 output_path = os.path.join(FACES_DIR, frame_file)
                 cv.imwrite(output_path, face_image)
+
+        if len(batch_metadata) == batch_size:
+            batch_filename = f"metadata_batch_{current_batch}.json"
+            batch_path = os.path.join(FACES_DIR, batch_filename)
+            with open(batch_path, "w") as f:
+                json.dump(batch_metadata, f, indent=4)
+
+                batch_metadata = []
+                current_batch += 1
+
+        if batch_metadata:
+            batch_filename = f"metadata_batch_{current_batch}.json"
+            batch_path = os.path.join(FACES_DIR, batch_filename)
+            with open(batch_path, "w") as f:
+                json.dump(batch_metadata, f, indent=4)
+
 
     if frameList.size > 0:
         print(f"Face detection rating = {round((totalFaces / np.size(frameList)), 3)}")
