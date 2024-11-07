@@ -7,3 +7,9 @@ A simple program that downloads a video from a URL, decomposes a video into fram
 Each URL that is passed into the program should be seperated by a space and the url should be enclosed in quotes.
 
 `videoFace process {url}`
+
+## TODO
+- Implement depduping using https://github.com/idealo/imagededup
+- Despagetify code
+- remove excessive try-catch blocks
+- Add a containerized runtime???
