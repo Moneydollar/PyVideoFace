@@ -19,9 +19,9 @@ def setup(video_path):
 
     videoName = video_path.split('/')[-1]
 
-    frames_output_dir = os.path.join("/../.cache/output", videoName)
-    frames_with_boxes_dir = os.path.join("/../.cache/boxed", videoName)
-    faces_dir = os.path.join("/../faces", videoName)
+    frames_output_dir = os.path.join("./../.cache/output", videoName)
+    frames_with_boxes_dir = os.path.join("./../.cache/boxed", videoName)
+    faces_dir = os.path.join("./../faces", videoName)
     print(f"--------------{faces_dir}--------------")
 
     os.makedirs(frames_output_dir, exist_ok=True)
